@@ -14,17 +14,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CartService {
 
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
 
-    @Transactional
     public void addToCart(String userId, CartItemRequest request) {
         User user = findUser(userId);
         Product product = findProduct(request.getProductId());
@@ -67,7 +68,6 @@ public class CartService {
         return (existing.getQuantity() == null ? 0 : existing.getQuantity()) + requestedQuantity;
     }
 
-    @Transactional
     public void removeFromCart(String userId, Long productId) {
         User user = findUser(userId);
         Product product = findProduct(productId);
@@ -77,5 +77,11 @@ public class CartService {
             throw new ResourceNotFoundException(
                     "Cart item not found for user: " + userId + " and product: " + productId);
         }
+    }
+
+    public List<CartItem> getCart(String userId) {
+        return userRepository.findById(Long.valueOf(userId))
+                .map(cartItemRepository::findByUser)
+                .orElseGet(List::of);
     }
 }
