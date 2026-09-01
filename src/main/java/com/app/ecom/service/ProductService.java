@@ -2,82 +2,80 @@ package com.app.ecom.service;
 
 import com.app.ecom.dto.ProductRequest;
 import com.app.ecom.dto.ProductResponse;
+import com.app.ecom.exception.ResourceNotFoundException;
 import com.app.ecom.model.Product;
 import com.app.ecom.repository.ProductRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public ProductResponse createProduct(ProductRequest productRequest) {
-        var product = new Product();
-        updateProductFromRequest(product, productRequest);
-        var savedProduct = productRepository.save(product);
-        return mapToProductResponse(savedProduct);
+    public ProductResponse createProduct(ProductRequest request) {
+        return mapToProductResponse(productRepository.save(toProduct(request)));
     }
 
-    public Optional<ProductResponse> updateProduct(Long id, @Valid ProductRequest productRequest) {
-        return productRepository.findById(id)
-                .map(existingProduct -> {
-                    updateProductFromRequest(existingProduct, productRequest);
-                    var savedProduct = productRepository.save(existingProduct);
-                    return mapToProductResponse(savedProduct);
-                });
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
+        Product product = findProduct(id);
+        applyRequest(product, request);
+        return mapToProductResponse(productRepository.save(product));
     }
 
     public List<ProductResponse> getProducts() {
         return productRepository.findByIsActiveTrue().stream()
                 .map(this::mapToProductResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    public boolean deleteProduct(Long id) {
-        return productRepository.findById(id)
-                .map(product -> {
-                    product.setIsActive(true);
-                    productRepository.save(product);
-                    return true;
-                }).orElse(false);
+    public void deleteProduct(Long id) {
+        Product product = findProduct(id);
+        product.setIsActive(false);
+        productRepository.save(product);
     }
-
-    private ProductResponse mapToProductResponse(Product savedProduct) {
-        ProductResponse response = new ProductResponse();
-
-        response.setId(savedProduct.getId());
-        response.setName(savedProduct.getName());
-        response.setIsActive(savedProduct.getIsActive());
-        response.setCategory(savedProduct.getCategory());
-        response.setDescription(savedProduct.getDescription());
-        response.setPrice(savedProduct.getPrice());
-        response.setImageUrl(savedProduct.getImageUrl());
-        response.setStockQuantity(savedProduct.getStockQuantity());
-
-        return response;
-    }
-
-    private void updateProductFromRequest(Product product, ProductRequest productRequest) {
-        product.setName(productRequest.getName());
-        product.setCategory(productRequest.getCategory());
-        product.setDescription(productRequest.getDescription());
-        product.setPrice(productRequest.getPrice());
-        product.setImageUrl(productRequest.getImageUrl());
-        product.setStockQuantity(productRequest.getStockQuantity());
-    }
-
 
     public List<ProductResponse> searchProducts(String keyword) {
-        return productRepository.searchProducts(keyword)
-                .stream()
+        return productRepository.searchProducts(keyword).stream()
                 .map(this::mapToProductResponse)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    private Product findProduct(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+    }
+
+    private Product toProduct(ProductRequest request) {
+        Product product = new Product();
+        applyRequest(product, request);
+        return product;
+    }
+
+    private void applyRequest(Product product, ProductRequest request) {
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setCategory(request.getCategory());
+        product.setImageUrl(request.getImageUrl());
+    }
+
+    private ProductResponse mapToProductResponse(Product product) {
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStockQuantity(),
+                product.getCategory(),
+                product.getImageUrl(),
+                product.getIsActive()
+        );
     }
 }
