@@ -3,88 +3,96 @@ package com.app.ecom.service;
 import com.app.ecom.dto.AddressDTO;
 import com.app.ecom.dto.UserRequest;
 import com.app.ecom.dto.UserResponse;
+import com.app.ecom.exception.ResourceNotFoundException;
 import com.app.ecom.model.Address;
+import com.app.ecom.model.User;
 import com.app.ecom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import com.app.ecom.model.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
+
     private final UserRepository userRepository;
 
     public List<UserResponse> fetchAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    public void addUser(UserRequest userRequest) {
+    public UserResponse fetchUser(Long id) {
+        return mapToUserResponse(findUser(id));
+    }
+
+    public UserResponse addUser(UserRequest request) {
+        return mapToUserResponse(userRepository.save(toUser(request)));
+    }
+
+    public UserResponse updateUser(Long id, UserRequest request) {
+        User user = findUser(id);
+        applyRequest(user, request);
+        return mapToUserResponse(userRepository.save(user));
+    }
+
+    private User findUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
+    private User toUser(UserRequest request) {
         User user = new User();
-        updateUserFromRequest(user, userRequest);
-        userRepository.save(user);
+        applyRequest(user, request);
+        return user;
     }
 
-    public Optional<UserResponse> fetchUser(Long id) {
-        return userRepository.findById(id)
-                .map(this::mapToUserResponse);
-    }
-
-    public boolean updateUser(Long id, UserRequest updatedUserRequest) {
-        return userRepository.findById(id)
-                .map(existingUser -> {
-                    updateUserFromRequest(existingUser, updatedUserRequest);
-                    userRepository.save(existingUser);
-                    return true;
-                }).orElse(false);
-    }
-
-    private void updateUserFromRequest(User user, UserRequest userRequest) {
-        user.setFirstName(userRequest.getFirstName());
-        user.setLastName(userRequest.getLastName());
-        user.setEmail(userRequest.getEmail());
-        user.setPhone(userRequest.getPhone());
-
-        if (userRequest.getAddress() != null) {
-            Address address = new Address();
-
-            address.setCity(userRequest.getAddress().getCity());
-            address.setStreet(userRequest.getAddress().getStreet());
-            address.setState(userRequest.getAddress().getState());
-            address.setZipCode(userRequest.getAddress().getZipCode());
-            address.setCountry(userRequest.getAddress().getCountry());
-
-            user.setAddress(address);
+    private void applyRequest(User user, UserRequest request) {
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        if (request.getAddress() != null) {
+            user.setAddress(toAddress(request.getAddress()));
         }
+    }
+
+    private Address toAddress(AddressDTO addressDTO) {
+        Address address = new Address();
+        address.setStreet(addressDTO.getStreet());
+        address.setCity(addressDTO.getCity());
+        address.setState(addressDTO.getState());
+        address.setCountry(addressDTO.getCountry());
+        address.setZipCode(addressDTO.getZipCode());
+        return address;
     }
 
     private UserResponse mapToUserResponse(User user) {
-        UserResponse response = new UserResponse();
+        return new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getRole(),
+                toAddressDTO(user.getAddress())
+        );
+    }
 
-        response.setId(String.valueOf(user.getId()));
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setPhone(user.getPhone());
-        response.setUserRole(user.getRole());
-
-        if (user.getAddress() != null) {
-            AddressDTO addressDTO = new AddressDTO();
-
-            addressDTO.setStreet(user.getAddress().getStreet());
-            addressDTO.setCity(user.getAddress().getCity());
-            addressDTO.setState(user.getAddress().getState());
-            addressDTO.setCountry(user.getAddress().getCountry());
-            addressDTO.setZipCode(user.getAddress().getZipCode());
-
-            response.setAddress(addressDTO);
+    private AddressDTO toAddressDTO(Address address) {
+        if (address == null) {
+            return null;
         }
-
-        return response;
+        return new AddressDTO(
+                address.getStreet(),
+                address.getCity(),
+                address.getState(),
+                address.getCountry(),
+                address.getZipCode()
+        );
     }
 }

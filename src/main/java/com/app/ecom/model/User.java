@@ -12,8 +12,6 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-//@AllArgsConstructor
-//@Entity
 @Entity(name = "users")
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class User {
