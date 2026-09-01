@@ -22,6 +22,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EmptyCartException.class)
+    public ResponseEntity<Map<String, Object>> handleEmptyCart(EmptyCartException ex) {
+        return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientStock(InsufficientStockException ex) {
         return new ResponseEntity<>(Map.of("error", ex.getMessage()), HttpStatus.CONFLICT);
