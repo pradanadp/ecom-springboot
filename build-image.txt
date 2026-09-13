@@ -1,2 +1,7 @@
+# build docker image
 ./mvnw spring-boot:build-image "-Dspring-boot.build-image.imageName=<your-dockerhub-username>/<your-image-name>"
 ./mvnw spring-boot:build-image "-Dspring-boot.build-image.imageName=dimasprd/ecom-application"
+
+# push docker image to registry (docker hub)
+docker login
+docker push <your-dockerhub-username>/<your-image-name>
