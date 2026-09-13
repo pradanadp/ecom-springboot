@@ -1,0 +1,2 @@
+./mvnw spring-boot:build-image "-Dspring-boot.build-image.imageName=<your-dockerhub-username>/<your-image-name>"
+./mvnw spring-boot:build-image "-Dspring-boot.build-image.imageName=dimasprd/ecom-application"
