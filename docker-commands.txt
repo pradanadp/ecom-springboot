@@ -1,0 +1,14 @@
+docker pull <image>
+docker push <username/image>
+docker run -it -d -p <host-port>:<container-port> --name <name> <image>
+docker stop <container-id/container-name>
+docker start <container-id/container-name>
+docker rm <container-id/container-name>
+docker rmi <image-id/image-name> // remove images from local storage
+docker ps
+docker ps -a
+docker images
+docker exec -it <container-name/container-id> bash
+docker build -t <username/image> .
+docker logs <container-name/container-id>
+docker inspect <container-name/container-id>
