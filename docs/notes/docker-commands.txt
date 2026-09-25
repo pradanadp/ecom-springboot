@@ -1,0 +1,28 @@
+docker pull <image>
+docker push <username/image>
+docker run -it -d -p <host-port>:<container-port> --name <name> <image>
+docker stop <container-id/container-name>
+docker start <container-id/container-name>
+docker rm <container-id/container-name>
+docker rmi <image-id/image-name> // remove images from local storage
+docker ps
+docker ps -a
+docker images
+docker exec -it <container-name/container-id> bash
+docker build -t <username/image> .
+docker logs <container-name/container-id>
+docker inspect <container-name/container-id>
+
+docker exec -it pgadmin ping db
+
+docker network create <network-name> // docker network create my-network
+docker network prune // delete all the network setting
+
+docker rm -f db pgadmin // remove db and pgadmin containers
+
+# RUN POSTGRES ON DOCKER
+docker run -d --name db -e POSTGRES_PASSWORD=mysecretpassword postgres:14
+docker run -d --name db --network my-network -e POSTGRES_PASSWORD=mysecretpassword postgres:14 // with network
+
+docker run -d --name pgadmin -e PGADMIN_DEFAULT_EMAIL=user@domain.com -e PGADMIN_DEFAULT_PASSWORD=SuperSecret dpage/pgadmin4
+docker run -d --name pgadmin --network my-network -e PGADMIN_DEFAULT_EMAIL=user@domain.com -e PGADMIN_DEFAULT_PASSWORD=SuperSecret dpage/pgadmin4
