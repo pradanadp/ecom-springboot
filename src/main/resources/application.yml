@@ -4,9 +4,9 @@ spring:
   application:
     name: ecom-application
   datasource:
-    url: jdbc:postgresql://localhost:5432/ecomdb
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://localhost:5432/embarkx
+    username: embarkx
+    password: embarkx
   jpa:
     database: POSTGRESQL
     show-sql: true
